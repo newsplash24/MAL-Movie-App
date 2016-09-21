@@ -1,0 +1,45 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/fragment_main"
+    tools:context="com.MhamedMalgp.moviesapp.MainActivityFragment"
+    android:background="@android:color/background_light">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:minHeight="90dp"
+        android:layout_alignParentTop="true"
+        android:id="@+id/fav_header"
+        android:background="#f1f6e5a6"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Favorites"
+            android:id="@+id/textView"
+            android:layout_gravity="center"
+            android:gravity="center_vertical|center_horizontal"
+            android:textColor="#61510f" />
+    </LinearLayout>
+
+<GridView
+        android:id="@+id/gridview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/fav_header"
+        android:columnWidth="150dp"
+        android:numColumns="auto_fit"
+        android:verticalSpacing="2dp"
+        android:horizontalSpacing="2dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+
+         />
+
+
+
+</RelativeLayout>
