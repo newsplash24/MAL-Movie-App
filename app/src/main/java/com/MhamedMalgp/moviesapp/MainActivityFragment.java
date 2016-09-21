@@ -444,8 +444,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
 
-            inserted = getActivity().getContentResolver().
-                    bulkInsert(MoviesContract.MovieEntry.CONTENT_URI, cvArray);
+             try {
+                inserted = getActivity().getContentResolver().
+                        bulkInsert(MoviesContract.MovieEntry.CONTENT_URI, cvArray);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
 
             Log.d(TAG, "FetchMovieTask Complete. " + inserted + " Inserted");
