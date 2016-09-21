@@ -90,7 +90,7 @@
 
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:id="@+id/side_bar"
+        android:id="@+id/scrollView"
         android:layout_below="@+id/header"
         android:layout_toRightOf="@+id/voteAverageTxt"
         android:layout_alignParentRight="true"
