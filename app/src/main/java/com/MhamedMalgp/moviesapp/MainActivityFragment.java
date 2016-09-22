@@ -213,6 +213,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         gridview.setAdapter(mAdapter);
         pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         fav_shown = pref.getBoolean("FAV_SHOWN",false);
+         if(!fav_shown)
+            favHeader.setVisibility(View.GONE);
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
