@@ -17,4 +17,5 @@
     <string name="menu_refresh">Refresh</string>
     <string name="menu_favorites">Favorites</string>
     <string name="reviewsButton">Reviews</string>
+    <string name="action_share">Share</string>
 </resources>
