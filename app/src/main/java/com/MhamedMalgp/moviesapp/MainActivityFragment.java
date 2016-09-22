@@ -74,6 +74,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private final String SELECTED_KEY="selectedPosition";
     private final String SELECTED_CATEGORY_KEY = "selectedCategory";
     private Cursor mCursor;
+    private Context mContext;
 
     static final int COLUMN_ID = 0;
     static final int COLUMN_MOVIE_ID = 1;
@@ -105,11 +106,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         Uri catUri = MoviesContract.MovieEntry.builMovieCategoryUri(category);
         String[] selectionArgs = {category};
 
+
+
         if(fav_shown)
-            return new CursorLoader(getActivity(), MoviesContract.MovieEntry.buildFavoritesUri(),
+            return new CursorLoader(mContext, MoviesContract.MovieEntry.buildFavoritesUri(),
                     MOVIE_COLUMNS, null, null, null);
         else
-        return new CursorLoader(getActivity(),catUri,
+        return new CursorLoader(mContext,catUri,
                 MOVIE_COLUMNS, null, null, null);
 
 
@@ -118,6 +121,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onLoadFinished(Loader loader, Cursor cursor) {
 
+        if(cursor == null)
+            return;
         mCursor = cursor;
         if(loadOrDownload(cursor.getCount()>0?true:false)) {
             mAdapter.swapCursor(cursor);
@@ -172,13 +177,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        mContext = getActivity();
         getLoaderManager().initLoader(LOADER_ID, null, this);
-
-
         if(MainActivity.mTwoPane && mCursor != null && mCursor.getCount() >0) {
             mCursor.moveToFirst();
             int indx_id = mCursor.getColumnIndex(MoviesContract.MovieEntry._ID);
-            ((Callback) getActivity()).onItemSelected(
+            ((Callback) mContext).onItemSelected(
                     MoviesContract.MovieEntry.builMovieUri(mCursor.getInt(indx_id)), 0);
             mCursor.moveToPrevious();
 
@@ -186,10 +190,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onActivityCreated(savedInstanceState);
     }
 
-
+    public MainActivityFragment() {
+        setHasOptionsMenu(true);
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
+
 
         super.onCreate(savedInstanceState);
     }
@@ -253,7 +259,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         if(isResumed&& !MainActivity.mTwoPane && fav_shown)
             getLoaderManager().restartLoader(LOADER_ID, null, MainActivityFragment.this);
 
-
         super.onResume();
     }
 
@@ -266,8 +271,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 
-
         inflater.inflate(R.menu.menu_main, menu);
+        super.onCreateOptionsMenu(menu, inflater);
         MenuItem item = menu.findItem(R.id.spinner);
         Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
 
@@ -283,6 +288,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
                 TextView tv = (TextView) view;
+                if(tv!= null)
                 tv.setTextColor(Color.WHITE);
                 String selectedSortBy = (String) parent.getSelectedItem();
 
@@ -347,6 +353,18 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         if(fav_shown)
             spinner.setSelection(2);
 
+    }
+
+    @Override
+    public void onDestroy() {
+        getLoaderManager().destroyLoader(LOADER_ID);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        getLoaderManager().destroyLoader(LOADER_ID);
+        super.onDetach();
     }
 
     @Override
@@ -444,13 +462,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
             cVVector.toArray(cvArray);
 
-             try {
-                inserted = getActivity().getContentResolver().
-                        bulkInsert(MoviesContract.MovieEntry.CONTENT_URI, cvArray);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+                    inserted = mContext.getContentResolver().
+                            bulkInsert(MoviesContract.MovieEntry.CONTENT_URI, cvArray);
 
             Log.d(TAG, "FetchMovieTask Complete. " + inserted + " Inserted");
 
@@ -471,25 +484,26 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     }
     //-----------------------------------------------------------------------------------------------
     private String getCategory(){
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String item_top_rated = getActivity().getString(R.string.item_top_rated);
-        String cat = pref.getString(getActivity().getString(R.string.sort_by_key),
-                item_top_rated);
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String item_top_rated = mContext.getString(R.string.item_top_rated);
+        String cat = pref.getString(mContext.getString(R.string.sort_by_key),
+                    item_top_rated);
         return cat.equals(item_top_rated)? MoviesContract.MovieEntry.CATEGORY_TOP_RATED:
                 MoviesContract.MovieEntry.CATEGORY_POPULAR;
     }
     //-----------------------------------------------------------------------------------------------
     private void downlaodData(){
         mMovies = new ArrayList<>();
-        pDialog = new ProgressDialog(getActivity());
+        pDialog = new ProgressDialog(mContext);
 
         final LoaderManager loaderManager = getLoaderManager();
 
         String tag_string_req= "string_req";
         //It will not work if api_key is not added in Strings resources
-        String url= getActivity().getString(R.string.top_rated_url)+getActivity().getString(R.string.api_key);
+        String url= mContext.getString(R.string.top_rated_url)+mContext.getString(R.string.api_key);
 
         pDialog.setMessage("Loading...");
+        if(!pDialog.isShowing())
         pDialog.show();
         pDialog.setCanceledOnTouchOutside(false);
         StringRequest stringObjReq= new StringRequest(Request.Method.GET,
@@ -526,7 +540,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
         String tag_string_req2= "string_req";
         //It will not work if api_key is not added in Strings resources
-        String url2= getActivity().getString(R.string.most_popular_url)+getActivity().getString(R.string.api_key);
+        String url2= mContext.getString(R.string.most_popular_url)+mContext.getString(R.string.api_key);
 
         StringRequest stringObjReq2= new StringRequest(Request.Method.GET,
                 url2,
@@ -566,11 +580,18 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         Global.getInstance().addToRequestQueue(stringObjReq2, tag_string_req2);
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if(pDialog!=null)
+        pDialog.dismiss();
+    }
+
     private boolean haveNetworkConnection() {
         boolean haveConnectedWifi = false;
         boolean haveConnectedMobile = false;
 
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo[] netInfo = cm.getAllNetworkInfo();
         for (NetworkInfo ni : netInfo) {
             if (ni.getTypeName().equalsIgnoreCase("WIFI"))
@@ -586,7 +607,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private void showConnectionError(){
 
 
-        new AlertDialog.Builder(getActivity())
+        new AlertDialog.Builder(mContext)
                 .setTitle("No Internet Connection")
                 .setMessage("Please check your internet connection and try again.")
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -616,7 +637,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             return  false;
         }
         else if (fav_shown && !hasData) {
-            Toast.makeText(getActivity(), "No saved favorites!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "No saved favorites!", Toast.LENGTH_SHORT).show();
                 return true;
         }
         else if(hasData) {
