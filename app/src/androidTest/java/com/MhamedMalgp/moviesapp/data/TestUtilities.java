@@ -8,12 +8,12 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.test.AndroidTestCase;
 
-//import com.malgp.moviesapp.data.PollingCheck;
-
 import com.MhamedMalgp.moviesapp.utils.PollingCheck;
 
 import java.util.Map;
 import java.util.Set;
+
+//import com.malgp.moviesapp.data.PollingCheck;
 
 
 public class TestUtilities extends AndroidTestCase {
@@ -43,6 +43,7 @@ public class TestUtilities extends AndroidTestCase {
         movieValues.put(MoviesContract.MovieEntry._ID, 46513);
         movieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITES_FLAG, MoviesContract.MovieEntry.FLAG_FALSE);
         movieValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, "Intersteller");
+        movieValues.put(MoviesContract.MovieEntry.COLUMN_MOVIE_KEY, "TEST_KEY");
         movieValues.put(MoviesContract.MovieEntry.COLUMN_CATEGORY, MoviesContract.MovieEntry.CATEGORY_POPULAR);
         movieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE_DATE, "7/8/2016");
         movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_PATH, "/982ACS564");
@@ -56,8 +57,8 @@ public class TestUtilities extends AndroidTestCase {
 
         ContentValues testValues = new ContentValues();
         testValues.put(MoviesContract.TrailerEntry.COLUMN_KEY, "XJ0G5Fpzdf8");
-        testValues.put(MoviesContract.TrailerEntry.COLUMN_MOVIE_ID,  movie_id);
-        testValues.put(MoviesContract.TrailerEntry.COLUMN_MOVIE_KEY,  "ExAMPLE_KEY");
+        testValues.put(MoviesContract.TrailerEntry.COLUMN_MOVIE_ID, movie_id);
+        testValues.put(MoviesContract.TrailerEntry.COLUMN_MOVIE_KEY, "ExAMPLE_KEY");
 
         return testValues;
     }
@@ -67,9 +68,9 @@ public class TestUtilities extends AndroidTestCase {
         ContentValues testValues = new ContentValues();
         testValues.put(MoviesContract.ReviewEntry.COLUMN_PUBLISHER_NAME, "Barak Obama");
         testValues.put(MoviesContract.ReviewEntry.COLUMN_CONTENT, "OOOH! That Movie Was Great!");
-        testValues.put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID,  movie_id);
-        testValues.put(MoviesContract.ReviewEntry.COLUMN_MOVIE_KEY,  "ExAMPLE_KEY");
-        testValues.put(MoviesContract.ReviewEntry.COLUMN_URL,  "www.example.com");
+        testValues.put(MoviesContract.ReviewEntry.COLUMN_MOVIE_ID, movie_id);
+        testValues.put(MoviesContract.ReviewEntry.COLUMN_MOVIE_KEY, "ExAMPLE_KEY");
+        testValues.put(MoviesContract.ReviewEntry.COLUMN_URL, "www.example.com");
 
         return testValues;
     }
