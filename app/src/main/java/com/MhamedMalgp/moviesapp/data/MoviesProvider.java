@@ -246,6 +246,7 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+
                 break;
             }
 
@@ -262,6 +263,7 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+
                 break;
             }
 
@@ -306,6 +308,7 @@ public class MoviesProvider extends ContentProvider {
 
             case MOVIE_CATEGORY: {
                 retCursor = getMovieByCategory(uri, projection);
+
                 break;
             }
 
@@ -319,6 +322,7 @@ public class MoviesProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+
                 break;
             }
 
