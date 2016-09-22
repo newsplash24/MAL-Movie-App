@@ -87,7 +87,7 @@ public class TestProvider extends AndroidTestCase {
 
             ProviderInfo providerInfo = pm.getProviderInfo(componentName, 0);
             assertEquals("Error: MovieProvider registered with authority: " + providerInfo.authority +
-                    " instead of authority: " + MoviesContract.CONTENT_AUTHORITY,
+                            " instead of authority: " + MoviesContract.CONTENT_AUTHORITY,
                     providerInfo.authority, MoviesContract.CONTENT_AUTHORITY);
         } catch (PackageManager.NameNotFoundException e) {
 
@@ -168,7 +168,7 @@ public class TestProvider extends AndroidTestCase {
 
         TestUtilities.validateCursor("testBasicTrailersQueries, Trailers query", trailerCursor, trailerValues);
 
-        if ( Build.VERSION.SDK_INT >= 19 ) {
+        if (Build.VERSION.SDK_INT >= 19) {
             assertEquals("Error: Location Query did not properly set NotificationUri",
                     trailerCursor.getNotificationUri(), TrailerEntry.CONTENT_URI);
         }
@@ -195,7 +195,7 @@ public class TestProvider extends AndroidTestCase {
 
         TestUtilities.validateCursor("testBasicReviewsQueries, Reviews query", reviewCursor, reviewValues);
 
-        if ( Build.VERSION.SDK_INT >= 19 ) {
+        if (Build.VERSION.SDK_INT >= 19) {
             assertEquals("Error: Location Query did not properly set NotificationUri",
                     reviewCursor.getNotificationUri(), ReviewEntry.CONTENT_URI);
         }
@@ -230,7 +230,7 @@ public class TestProvider extends AndroidTestCase {
 
         int count = mContext.getContentResolver().update(
                 ReviewEntry.CONTENT_URI, updatedValues, ReviewEntry._ID + "= ?",
-                new String[] { Long.toString(reviewRowId)});
+                new String[]{Long.toString(reviewRowId)});
         assertEquals(count, 1);
 
         tco.waitForNotificationOrFail();
@@ -241,8 +241,8 @@ public class TestProvider extends AndroidTestCase {
         Cursor cursor = mContext.getContentResolver().query(
                 ReviewEntry.CONTENT_URI,
                 null,   // projection
-                ReviewEntry._ID + " =? " ,
-                new String[]{ reviewRowId+""},   // Values for the "where" clause
+                ReviewEntry._ID + " =? ",
+                new String[]{reviewRowId + ""},   // Values for the "where" clause
                 null    // sort order
         );
 
@@ -299,7 +299,6 @@ public class TestProvider extends AndroidTestCase {
                 null, // values for "where" clause
                 null // columns to group by
         );
-
 
 
         ContentValues reviewValues = TestUtilities.createReviewValues(movieRowId);
@@ -381,16 +380,18 @@ public class TestProvider extends AndroidTestCase {
 
 
     static private final int BULK_INSERT_RECORDS_TO_INSERT = 10;
+
     static ContentValues[] createBulkInsertMovieValues() {
 
         ContentValues[] returnContentValues = new ContentValues[BULK_INSERT_RECORDS_TO_INSERT];
 
-        for ( int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++ ) {
+        for (int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++) {
 
             ContentValues movieValues = new ContentValues();
-            movieValues.put(MovieEntry._ID, 46513+i);
+            movieValues.put(MovieEntry._ID, 46513 + i);
             movieValues.put(MoviesContract.MovieEntry.COLUMN_FAVORITES_FLAG, MoviesContract.MovieEntry.FLAG_FALSE);
             movieValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, "Intersteller");
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_MOVIE_KEY, "TEST_KEY" + i);
             movieValues.put(MovieEntry.COLUMN_CATEGORY, MovieEntry.CATEGORY_POPULAR);
             movieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE_DATE, "7/8/2016");
             movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_PATH, "/982ACS564");
@@ -427,7 +428,7 @@ public class TestProvider extends AndroidTestCase {
         assertEquals(cursor.getCount(), BULK_INSERT_RECORDS_TO_INSERT);
 
         cursor.moveToFirst();
-        for ( int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++, cursor.moveToNext() ) {
+        for (int i = 0; i < BULK_INSERT_RECORDS_TO_INSERT; i++, cursor.moveToNext()) {
             TestUtilities.validateCurrentRecord("testBulkInsert.  Error validating MovieEntry " + i,
                     cursor, bulkInsertContentValues[i]);
         }
