@@ -16,6 +16,7 @@ public class DetailActivity extends AppCompatActivity {
 
         DetailActivityFragment fragment = new DetailActivityFragment();
         fragment.setArguments(arguments);
+        fragment.setHasOptionsMenu(true);
 
         if(savedInstanceState == null) {
             getSupportFragmentManager()
