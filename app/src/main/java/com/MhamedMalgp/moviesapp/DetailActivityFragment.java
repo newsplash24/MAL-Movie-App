@@ -17,9 +17,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -49,6 +54,7 @@ import java.util.Vector;
 public class DetailActivityFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private static final String LOG_TAG = DetailActivityFragment.class.getSimpleName();
     private TextView titleTv;
     private TextView releaseDateTv;
     private TextView averageRatingTv;
@@ -57,19 +63,27 @@ public class DetailActivityFragment extends Fragment
     private TableLayout trailersTable, reviewsTable;
     private LayoutInflater inflater;
     static final String DETAIL_URI = "URI";
-    private Uri mUri;
+    static Uri mUri;
     private Button trailersButton, reviewsButton;
     private Button favButton;
     private static Boolean TRAILER_TABLE_EXPANDED, REVIEWS_TABLE_EXPANDED;
     private int reviewsTotalResults;
     private int mMovieID;
+    private final int TRAILERS_DIALOG = 0;
+    private final int REVIEWS_DIALOG = 1;
+    private final int FETCHING_REVIEWS_DIALOG = 2;
     private Boolean savedInstanceNull;
     private Boolean manuallyUpdated;
     private Boolean connectionErrorShown;
+    private Boolean noTrailers;
     private Boolean REVIEWS_TASK_FINISHED;
+    private Boolean Trailers_TASK_FINISHED;
     private SharedPreferences pref;
     private Cursor mCursor;
     private ScrollView sv;
+    static ShareActionProvider mShareActionProvider;
+    private ProgressDialog pDialogFetchingReviews, pDialogTrailers,  pDialogReviews;
+
 
     private int DETAIL_LOADER = 0;
 
@@ -99,9 +113,10 @@ public class DetailActivityFragment extends Fragment
 
     public interface RecreateLoader {
         void recreateLoader();
+        void recreateShareProvider();
     }
 
-    ;
+
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -180,6 +195,13 @@ public class DetailActivityFragment extends Fragment
 
 
     public DetailActivityFragment() {
+//        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -207,6 +229,8 @@ public class DetailActivityFragment extends Fragment
         manuallyUpdated = false;
         connectionErrorShown = false;
         REVIEWS_TASK_FINISHED = false;
+        Trailers_TASK_FINISHED = false;
+        noTrailers = false;
         pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         reviewsTotalResults = -1;
@@ -224,7 +248,12 @@ public class DetailActivityFragment extends Fragment
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
 
+        pDialogTrailers = new ProgressDialog(getActivity());
+        pDialogFetchingReviews = new ProgressDialog(getActivity());
+        pDialogReviews= new ProgressDialog(getActivity());
+
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+
 
         trailersButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -233,15 +262,20 @@ public class DetailActivityFragment extends Fragment
                     showErrorDialog("", "No movie selected! Please select a movie.");
                     return;
                 }
-                final ProgressDialog pDialog = new ProgressDialog(getActivity());
-                pDialog.setMessage("Loading Trailers...");
+
+                pDialogTrailers.setMessage("Loading Trailers...");
                 if (trailersTable.getChildCount() == 0) {
-                    pDialog.show();
+                    if(!pDialogTrailers.isShowing())
+                    pDialogTrailers.show();
                     final Cursor cursor = getActivity().getContentResolver().query(MoviesContract.TrailerEntry.
                             buildTrailersUri(Long.parseLong(
                                     mUri.getLastPathSegment())), null, null, null, null
                     );
-                    if (cursor.getCount() <= 0) {
+                    if(noTrailers && Trailers_TASK_FINISHED)
+                    {
+                        Toast.makeText(getActivity(), "No trailers for this movie.", Toast.LENGTH_SHORT).show();
+                    }
+                    else if (cursor.getCount() <= 0) {
                         showErrorDialog("No Saved Trailers Data", "Please connect to the internet and try again.");
                         connectionErrorShown = true;
                     }
@@ -266,9 +300,10 @@ public class DetailActivityFragment extends Fragment
                         trailersTable.addView(tr);
 
                     }
-                    pDialog.dismiss();
+                    pDialogTrailers.dismiss();
                     trailersTable.setVisibility(View.VISIBLE);
                     TRAILER_TABLE_EXPANDED = true;
+                    if(cursor != null)
                     cursor.close();
                 } else {
                     if (TRAILER_TABLE_EXPANDED) {
@@ -289,9 +324,9 @@ public class DetailActivityFragment extends Fragment
                     showErrorDialog("", "No movie selected! Please select a movie.");
                     return;
                 }
-                final ProgressDialog pDialog = new ProgressDialog(getActivity());
-                pDialog.setMessage("Loading Reviews...");
-                pDialog.setCanceledOnTouchOutside(false);
+
+                pDialogReviews.setMessage("Loading Reviews...");
+                pDialogReviews.setCanceledOnTouchOutside(false);
                 if (reviewsTable.getChildCount() == 0) {
 
 
@@ -310,7 +345,8 @@ public class DetailActivityFragment extends Fragment
                     final int INDX_AUTHOR = cursor.getColumnIndex(MoviesContract.ReviewEntry.COLUMN_PUBLISHER_NAME);
                     final int INDX_CONTENT = cursor.getColumnIndex(MoviesContract.ReviewEntry.COLUMN_CONTENT);
                     final int INDX_URL = cursor.getColumnIndex(MoviesContract.ReviewEntry.COLUMN_URL);
-                    pDialog.show();
+                    if(!pDialogReviews.isShowing())
+                    pDialogReviews.show();
                     while (cursor.moveToNext()) {
                         View view = inflater.inflate(R.layout.reviews_table_row, null);
                         TableRow tr = (TableRow) view.findViewById(R.id.row);
@@ -335,9 +371,11 @@ public class DetailActivityFragment extends Fragment
                         reviewsTable.addView(tr);
 
                     }
-                    pDialog.dismiss();
+                    dismissProgressDialog(REVIEWS_DIALOG);
                     reviewsTable.setVisibility(View.VISIBLE);
                     REVIEWS_TABLE_EXPANDED = true;
+                    if(cursor !=null)
+                        cursor.close();
                 } else {
                     if (REVIEWS_TABLE_EXPANDED) {
                         reviewsTable.setVisibility(View.GONE);
@@ -394,9 +432,13 @@ public class DetailActivityFragment extends Fragment
                     Log.e("ITER", iter.next().toString());
                 }
 
-                getActivity().getContentResolver().update(mUri,
-                        values, MoviesContract.MovieEntry._ID + "=? ",
-                        new String[]{values.get(MoviesContract.MovieEntry._ID) + ""});
+                try {
+                    getActivity().getContentResolver().update(mUri,
+                            values, MoviesContract.MovieEntry._ID + "=? ",
+                            new String[]{values.get(MoviesContract.MovieEntry._ID) + ""});
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 manuallyUpdated = true;
                 if (MainActivity.mTwoPane && pref.getBoolean("FAV_SHOWN", false)) {
                     ((RecreateLoader) getActivity()).recreateLoader();
@@ -405,7 +447,87 @@ public class DetailActivityFragment extends Fragment
             }
         });
 
+        if(savedInstanceState == null && MainActivity.mTwoPane)
+        ((RecreateLoader)getActivity()).recreateShareProvider();
         super.onActivityCreated(savedInstanceState);
+    }
+
+    private void dismissProgressDialog(int dialog) {
+        switch(dialog) {
+            case FETCHING_REVIEWS_DIALOG: {
+                if (pDialogFetchingReviews != null && pDialogFetchingReviews.isShowing()) {
+                    pDialogFetchingReviews.dismiss();
+                }
+                break;
+            }
+
+            case TRAILERS_DIALOG: {
+                if (pDialogTrailers != null && pDialogTrailers.isShowing()) {
+                    pDialogTrailers.dismiss();
+                }
+                break;
+            }
+
+            case REVIEWS_DIALOG: {
+                if (pDialogReviews != null && pDialogReviews.isShowing()) {
+                    pDialogReviews.dismiss();
+                }
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        dismissProgressDialog(TRAILERS_DIALOG);
+        dismissProgressDialog(REVIEWS_DIALOG);
+        dismissProgressDialog(FETCHING_REVIEWS_DIALOG);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_detail, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+
+        MenuItem item = menu.findItem(R.id.menu_item_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+
+        if (mUri != null) {
+            Intent i = createShareMovieIntent();
+            if(i == null)
+                return ;
+            mShareActionProvider.setShareIntent(i);
+        } else {
+            Log.d(LOG_TAG, "Share Action Provider is null or no trailers");
+        }
+    }
+
+    public Intent createShareMovieIntent(){
+        Cursor cursor = null;
+        try {
+            cursor = getActivity().getContentResolver().query(MoviesContract.TrailerEntry.
+                    buildTrailersUri(Long.parseLong(
+                            mUri.getLastPathSegment())), null, null, null, null
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if(cursor != null && cursor.moveToFirst()) {
+            String key = cursor.getString(cursor.getColumnIndex(MoviesContract.TrailerEntry.COLUMN_KEY));
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "This is an awesome movie!" + "  \nhttp://www.youtube.com/watch?v="+key
+            );
+            cursor.close();
+            return  shareIntent;
+        }
+        //shareIntent.putExtra(Intent.EXTRA_TEXT, mForecast + FORECAST_SHARE_HASHTAG);
+        if(cursor !=null)
+        cursor.close();
+
+        return null;
     }
 
     private final void focusOnView(final ScrollView sv, final View v){
@@ -425,6 +547,8 @@ public class DetailActivityFragment extends Fragment
         final String KEY = "key";
         JSONObject trailerJson = new JSONObject(trailersJsonStr);
         JSONArray trailersArray = trailerJson.getJSONArray(TMDB_LIST);
+        if(!trailersArray.toString().contains("key"))
+            noTrailers = true;
 
         Vector<ContentValues> cVVector = new Vector<ContentValues>(trailersArray.length());
 
@@ -451,9 +575,12 @@ public class DetailActivityFragment extends Fragment
                 e.printStackTrace();
             }
         }
+        Trailers_TASK_FINISHED = true;
+        if(mShareActionProvider != null)
+            mShareActionProvider.setShareIntent(createShareMovieIntent());
+
         return count;
     }
-
 
     int getReviewsDataFromJson(String reviewsJsonStr, int movieKEY, int movieID)
             throws JSONException {
@@ -546,10 +673,10 @@ public class DetailActivityFragment extends Fragment
                 "http://api.themoviedb.org/3/movie/" + movieKEY + "/reviews?"
                         + "api_key=" + getString(R.string.api_key);
 
-        final ProgressDialog pDialog = new ProgressDialog(getActivity());
-        pDialog.setMessage("Fetching Reviews...");
-        pDialog.show();
-        pDialog.setCanceledOnTouchOutside(false);
+
+        pDialogFetchingReviews.setMessage("Fetching Reviews...");
+        pDialogFetchingReviews.show();
+        pDialogFetchingReviews.setCanceledOnTouchOutside(false);
         StringRequest stringObjReq = new StringRequest(Request.Method.GET,
                 TRAILERS_URL,
                 new Response.Listener<String>() {
@@ -564,7 +691,7 @@ public class DetailActivityFragment extends Fragment
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        pDialog.dismiss();
+                        dismissProgressDialog(FETCHING_REVIEWS_DIALOG);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -576,7 +703,7 @@ public class DetailActivityFragment extends Fragment
                     connectionErrorShown = true;
                 }
                 reviewsTotalResults = 4;
-                pDialog.dismiss();
+                dismissProgressDialog(FETCHING_REVIEWS_DIALOG);
             }
         });
         Global.getInstance().addToRequestQueue(stringObjReq, tag_string_req);
