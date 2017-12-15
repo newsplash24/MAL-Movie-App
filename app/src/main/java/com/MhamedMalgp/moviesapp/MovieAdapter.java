@@ -274,13 +274,4 @@ public class MovieAdapter extends CursorAdapter {
         haveInternetConnection = haveNetworkConnection();
         haveData = hd;
     }
-
-//    public void setMode(int mode){
-//
-//    }
-//    public void updateFavorites(){
-////        mCursor.requery();
-//        notifyDataSetChanged();
-////        swapCursor(mCursor);
-//    }
 }
