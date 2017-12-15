@@ -12,6 +12,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -78,6 +79,9 @@ public class DetailActivityFragment extends Fragment
     private Boolean noTrailers;
     private Boolean REVIEWS_TASK_FINISHED;
     private Boolean Trailers_TASK_FINISHED;
+    int[] scrollingPosition;
+    private final String SCROLLING_POSITION_KEY = "selectedCategory";
+    private Parcelable state;
     private SharedPreferences pref;
     private Cursor mCursor;
     private ScrollView sv;
@@ -163,6 +167,14 @@ public class DetailActivityFragment extends Fragment
                 addTrailerRequest(data.getInt(COL_MOVIE_ID), data.getInt(COL_MOVIE_KEY), 0);
                 addReviewRequest(data.getInt(COL_MOVIE_ID), data.getInt(COL_MOVIE_KEY), 1);
             }
+
+            sv.post(new Runnable() {
+                @Override
+                public void run() {
+                    if ( scrollingPosition != null )
+                        sv.scrollTo(scrollingPosition[0], scrollingPosition[1]);
+                }
+            });
 
         }
 
@@ -253,6 +265,10 @@ public class DetailActivityFragment extends Fragment
         pDialogReviews= new ProgressDialog(getActivity());
 
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+
+        if ( savedInstanceState != null) {
+            scrollingPosition = savedInstanceState.getIntArray(SCROLLING_POSITION_KEY);
+        }
 
 
         trailersButton.setOnClickListener(new View.OnClickListener() {
@@ -478,6 +494,12 @@ public class DetailActivityFragment extends Fragment
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putIntArray(SCROLLING_POSITION_KEY, new int[]{ sv.getScrollX(), sv.getScrollY()});
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public void onDestroy() {
         dismissProgressDialog(TRAILERS_DIALOG);
         dismissProgressDialog(REVIEWS_DIALOG);
@@ -535,7 +557,8 @@ public class DetailActivityFragment extends Fragment
         sv.post(new Runnable() {
             @Override
             public void run() {
-                sv.smoothScrollTo(0, v.getTop());
+                if ( scrollingPosition != null )
+                sv.scrollTo(scrollingPosition[0], scrollingPosition[1]);
             }
         });
     }
