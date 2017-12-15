@@ -11,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -73,8 +74,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private LinearLayout favHeader;
     private final String SELECTED_KEY="selectedPosition";
     private final String SELECTED_CATEGORY_KEY = "selectedCategory";
+    private final String SCROLLING_POSITION_KEY = "selectedCategory";
     private Cursor mCursor;
     private Context mContext;
+    private Parcelable state;
 
     static final int COLUMN_ID = 0;
     static final int COLUMN_MOVIE_ID = 1;
@@ -134,7 +137,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         gridview.post(new Runnable() {
             @Override
             public void run() {
-                gridview.setSelection(0);
+
+                // Now restore the saved scroll position :D
+                if (state != null) {
+                    gridview.onRestoreInstanceState(state);
+                }
+
             }
         });
 
@@ -187,6 +195,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             mCursor.moveToPrevious();
 
         }
+
+        if (savedInstanceState !=  null) {
+            state = savedInstanceState.getParcelable(SCROLLING_POSITION_KEY);
+
+        }
+
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -374,6 +388,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
         outState.putInt(SELECTED_KEY, mPosition);
         outState.putString(SELECTED_CATEGORY_KEY, mCategory);
+        state = gridview.onSaveInstanceState();
+        outState.putParcelable(SCROLLING_POSITION_KEY, state);
         super.onSaveInstanceState(outState);
     }
 
